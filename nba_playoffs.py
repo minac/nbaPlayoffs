@@ -138,6 +138,22 @@ def get_recent_games():
         one_week_ago = today - timedelta(days=7)
         recent_final_games = []
 
+        # Calculate series records for each matchup
+        series_records = {}
+        for game in games:
+            if game["status"] == "Final":
+                visitor_id = game["visitor_team"]["id"]
+                home_id = game["home_team"]["id"]
+                matchup_key = f"{min(visitor_id, home_id)}-{max(visitor_id, home_id)}"
+
+                if matchup_key not in series_records:
+                    series_records[matchup_key] = {"visitor_wins": 0, "home_wins": 0}
+
+                if game["visitor_team_score"] > game["home_team_score"]:
+                    series_records[matchup_key]["visitor_wins"] += 1
+                else:
+                    series_records[matchup_key]["home_wins"] += 1
+
         for game in games:
             date_str = game["date"]
             try:
@@ -145,6 +161,16 @@ def get_recent_games():
             except ValueError:
                 game_date = datetime.strptime(date_str, "%Y-%m-%d")
             if one_week_ago <= game_date <= today and game["status"] == "Final":
+                # Add series record to the game data
+                visitor_id = game["visitor_team"]["id"]
+                home_id = game["home_team"]["id"]
+                matchup_key = f"{min(visitor_id, home_id)}-{max(visitor_id, home_id)}"
+                record = series_records[matchup_key]
+
+                game["series_record"] = {
+                    "visitor_wins": record["visitor_wins"],
+                    "home_wins": record["home_wins"]
+                }
                 recent_final_games.append(game)
 
         return jsonify(recent_final_games)

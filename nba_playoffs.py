@@ -131,7 +131,6 @@ def get_recent_games():
     try:
         nba = get_nba_instance()
         games = nba.get_all_playoff_games(2024)
-        teams = nba.get_teams()
 
         # Filter for games in the last 7 days with scores (status == 'Final')
         today = datetime.utcnow()
@@ -167,11 +166,23 @@ def get_recent_games():
                 matchup_key = f"{min(visitor_id, home_id)}-{max(visitor_id, home_id)}"
                 record = series_records[matchup_key]
 
-                game["series_record"] = {
-                    "visitor_wins": record["visitor_wins"],
-                    "home_wins": record["home_wins"]
+                # Only include the properties we actually use in the templates
+                optimized_game = {
+                    "date": game["date"],
+                    "visitor_team": {
+                        "abbreviation": game["visitor_team"]["abbreviation"]
+                    },
+                    "visitor_team_score": game["visitor_team_score"],
+                    "home_team": {
+                        "abbreviation": game["home_team"]["abbreviation"]
+                    },
+                    "home_team_score": game["home_team_score"],
+                    "series_record": {
+                        "visitor_wins": record["visitor_wins"],
+                        "home_wins": record["home_wins"]
+                    }
                 }
-                recent_final_games.append(game)
+                recent_final_games.append(optimized_game)
 
         return jsonify(recent_final_games)
     except Exception as e:

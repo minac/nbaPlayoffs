@@ -3,6 +3,9 @@ import json
 from datetime import datetime, timedelta
 import os
 from dotenv import load_dotenv
+from flask import Flask, jsonify
+
+app = Flask(__name__)
 
 class NBAPlayoffs:
     def __init__(self, api_key):
@@ -87,30 +90,54 @@ class NBAPlayoffs:
             cursor = response["meta"]["next_cursor"]
         return all_games
 
-def main():
+def get_nba_instance():
     # Load environment variables
     load_dotenv()
 
     # Get API key from environment variable
     api_key = os.getenv('BALLDONTLIE_API_KEY')
     if not api_key:
-        print("Error: BALLDONTLIE_API_KEY not found in environment variables")
-        print("Please create a .env file with your API key: BALLDONTLIE_API_KEY=your_api_key_here")
-        return
+        raise ValueError("BALLDONTLIE_API_KEY not found in environment variables")
 
+    return NBAPlayoffs(api_key)
+
+@app.route('/')
+def home():
+    return jsonify({
+        "status": "running",
+        "message": "NBA Playoffs API is running"
+    })
+
+@app.route('/teams')
+def get_teams():
     try:
-        nba = NBAPlayoffs(api_key)
-
-        # Get teams
+        nba = get_nba_instance()
         teams = nba.get_teams()
+        return jsonify(teams)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
-        # Get all playoff games for the current season
+@app.route('/games')
+def get_games():
+    try:
+        nba = get_nba_instance()
         games = nba.get_all_playoff_games(2024)
+        return jsonify(games)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/recent-games')
+def get_recent_games():
+    try:
+        nba = get_nba_instance()
+        games = nba.get_all_playoff_games(2024)
+        teams = nba.get_teams()
 
         # Filter for games in the last 7 days with scores (status == 'Final')
         today = datetime.utcnow()
         one_week_ago = today - timedelta(days=7)
         recent_final_games = []
+
         for game in games:
             date_str = game["date"]
             try:
@@ -118,47 +145,11 @@ def main():
             except ValueError:
                 game_date = datetime.strptime(date_str, "%Y-%m-%d")
             if one_week_ago <= game_date <= today and game["status"] == "Final":
-                recent_final_games.append((game, game_date))
+                recent_final_games.append(game)
 
-        # Build win/loss records for each team vs each opponent
-        win_loss = {}
-        for game in games:
-            if game["status"] != "Final":
-                continue
-            home_id = game["home_team"]["id"]
-            visitor_id = game["visitor_team"]["id"]
-            home_score = game["home_team_score"]
-            visitor_score = game["visitor_team_score"]
-            # Initialize dicts
-            win_loss.setdefault(home_id, {}).setdefault(visitor_id, {"win": 0, "loss": 0})
-            win_loss.setdefault(visitor_id, {}).setdefault(home_id, {"win": 0, "loss": 0})
-            # Update win/loss
-            if home_score > visitor_score:
-                win_loss[home_id][visitor_id]["win"] += 1
-                win_loss[visitor_id][home_id]["loss"] += 1
-            else:
-                win_loss[visitor_id][home_id]["win"] += 1
-                win_loss[home_id][visitor_id]["loss"] += 1
-
-        print(f"\nPlayoff Games with Scores in the Last Week:")
-        print("-" * 50)
-        for game, game_date in sorted(recent_final_games, key=lambda x: x[1]):
-            home_team = next(team for team in teams if team["id"] == game["home_team"]["id"])
-            visitor_team = next(team for team in teams if team["id"] == game["visitor_team"]["id"])
-            date = game_date.strftime("%Y-%m-%d")
-            home_id = home_team["id"]
-            visitor_id = visitor_team["id"]
-            # Get win/loss records
-            home_vs_visitor = win_loss[home_id][visitor_id]
-            visitor_vs_home = win_loss[visitor_id][home_id]
-            print(f"{date}: {visitor_team['full_name']} ({visitor_vs_home['win']}-{visitor_vs_home['loss']}) @ {home_team['full_name']} ({home_vs_visitor['win']}-{home_vs_visitor['loss']})")
-            print(f"Score: {game['visitor_team_score']}-{game['home_team_score']}")
-            print()
-
-    except requests.exceptions.RequestException as e:
-        print(f"Error making API request: {e}")
+        return jsonify(recent_final_games)
     except Exception as e:
-        print(f"An error occurred: {e}")
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    main()
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 8080)))

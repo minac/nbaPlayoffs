@@ -9,15 +9,13 @@
         <div class="team {% if game.visitor_team_score > game.home_team_score %}winner{% endif %}">
           <div class="team-content">
             <span class="name">{{ game.visitor_team.abbreviation }}</span>
-            <span class="score">{{ game.visitor_team_score }}</span>
-            <span class="series-record">({{ game.series_record.visitor_wins }}-{{ game.series_record.home_wins }})</span>
+            <span class="score">{{ game.visitor_team_score }} ({{ game.series_record.visitor_wins }}-{{ game.series_record.home_wins }})</span>
           </div>
         </div>
         <div class="team {% if game.home_team_score > game.visitor_team_score %}winner{% endif %}">
           <div class="team-content">
             <span class="name">{{ game.home_team.abbreviation }}</span>
-            <span class="score">{{ game.home_team_score }}</span>
-            <span class="series-record">({{ game.series_record.home_wins }}-{{ game.series_record.visitor_wins }})</span>
+            <span class="score">{{ game.home_team_score }} ({{ game.series_record.home_wins }}-{{ game.series_record.visitor_wins }})</span>
           </div>
         </div>
       </div>
@@ -86,14 +84,14 @@
 }
 
 .name {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
   line-height: 1;
   letter-spacing: -0.3px;
 }
 
 .score {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
   line-height: 1;
   letter-spacing: -0.3px;
@@ -101,7 +99,7 @@
 
 .team.winner .name,
 .team.winner .score {
-  font-size: 24px;
+  font-size: 22px;
   letter-spacing: -0.4px;
 }
 

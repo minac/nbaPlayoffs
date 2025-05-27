@@ -1,1 +1,1 @@
-web: python nba_playoffs.py
+web: gunicorn nba_playoffs:app

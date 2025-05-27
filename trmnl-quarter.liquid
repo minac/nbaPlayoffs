@@ -1,0 +1,113 @@
+<div class="nba-playoffs">
+  <div class="title">NBA Playoffs</div>
+  {% assign sorted_games = data | sort: 'date' | reverse %}
+  {% assign recent_games = sorted_games | slice: 0, 3 %}
+  {% for game in recent_games %}
+    <div class="game-card">
+      <div class="date">{{ game.date | date: "%m/%d" }}</div>
+      <div class="matchup">
+        <div class="team {% if game.visitor_team_score > game.home_team_score %}winner{% endif %}">
+          <div class="team-content">
+            <span class="name">{{ game.visitor_team.abbreviation }}</span>
+            <span class="score">{{ game.visitor_team_score }}</span>
+            <span class="series-record">({{ game.series_record.visitor_wins }}-{{ game.series_record.home_wins }})</span>
+          </div>
+        </div>
+        <div class="team {% if game.home_team_score > game.visitor_team_score %}winner{% endif %}">
+          <div class="team-content">
+            <span class="name">{{ game.home_team.abbreviation }}</span>
+            <span class="score">{{ game.home_team_score }}</span>
+            <span class="series-record">({{ game.series_record.home_wins }}-{{ game.series_record.visitor_wins }})</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+
+<style>
+.nba-playoffs {
+  padding: 6px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  height: 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 8px;
+  text-align: center;
+  letter-spacing: -0.5px;
+  text-transform: uppercase;
+}
+
+.game-card {
+  background: #ffffff;
+  border: 1px solid #000000;
+  border-radius: 3px;
+  padding: 6px;
+  width: 90%;
+}
+
+.date {
+  font-size: 12px;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.matchup {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.team {
+  display: flex;
+  align-items: baseline;
+  color: #666666;
+}
+
+.team.winner {
+  color: #000000;
+}
+
+.team-content {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.name {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.3px;
+}
+
+.score {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.3px;
+}
+
+.team.winner .name,
+.team.winner .score {
+  font-size: 18px;
+  letter-spacing: -0.4px;
+}
+
+.series-record {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.2px;
+  color: inherit;
+}
+</style>

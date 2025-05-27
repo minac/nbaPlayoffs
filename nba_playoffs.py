@@ -15,12 +15,6 @@ class NBAPlayoffs:
             "Authorization": api_key
         }
 
-    def get_teams(self):
-        """Get all NBA teams"""
-        response = requests.get(f"{self.base_url}/teams", headers=self.headers)
-        response.raise_for_status()
-        return response.json()["data"]
-
     def get_games(self, season=2024, cursor=None, per_page=100):
         """Get playoff games for the specified season with pagination"""
         params = {
@@ -38,44 +32,6 @@ class NBAPlayoffs:
         )
         response.raise_for_status()
         return response.json()
-
-    def get_team_standings(self, season=2024):
-        """Get team standings for the specified season"""
-        response = requests.get(
-            f"{self.base_url}/standings",
-            headers=self.headers,
-            params={"season": season}
-        )
-        response.raise_for_status()
-        return response.json()["data"]
-
-    def get_all_games_for_month(self, year=2025, month=5):
-        """Get all games for a specific month"""
-        all_games = []
-        cursor = None
-
-        while True:
-            response = self.get_games(cursor=cursor)
-            games = response["data"]
-
-            # Filter games for the specified month
-            month_games = []
-            for game in games:
-                try:
-                    game_date = datetime.strptime(game["date"], "%Y-%m-%dT%H:%M:%SZ")
-                except ValueError:
-                    game_date = datetime.strptime(game["date"], "%Y-%m-%d")
-                if game_date.month == month:
-                    month_games.append(game)
-
-            all_games.extend(month_games)
-
-            # Check if there are more pages
-            if not response.get("meta", {}).get("next_cursor"):
-                break
-            cursor = response["meta"]["next_cursor"]
-
-        return all_games
 
     def get_all_playoff_games(self, season=2024):
         """Get all playoff games for the specified season using pagination"""
@@ -107,24 +63,6 @@ def home():
         "status": "running",
         "message": "NBA Playoffs API is running"
     })
-
-@app.route('/teams')
-def get_teams():
-    try:
-        nba = get_nba_instance()
-        teams = nba.get_teams()
-        return jsonify(teams)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/games')
-def get_games():
-    try:
-        nba = get_nba_instance()
-        games = nba.get_all_playoff_games(2024)
-        return jsonify(games)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
 
 @app.route('/recent-games')
 def get_recent_games():
